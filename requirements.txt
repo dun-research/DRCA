@@ -1,0 +1,7 @@
+tqdm==4.61.2
+einops==0.4.1
+opencv-python==4.2.0.32
+numpy==1.20.3
+torch==2.0.1+cu118
+torchvision==0.15.2+cu118
+mmengine==0.7.4

@@ -1,0 +1,8 @@
+weights
+outputs
+data/test_frames
+data/test_videos
+data/kinetics400
+debug.sh
+*__pycache__*
+*.pyc
