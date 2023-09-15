@@ -1,6 +1,6 @@
-# Differentiable Resolution Compression and alignment for Efficient Video Classification and Retrieval
+# Differentiable Resolution Compression and Alignment for Efficient Video Classification and Retrieval
 
-This is an official pytorch implementation of paper "Differentiable Resolution Compression and alignment for Efficient Video Classification and Retrieval".  This repository provides code for training and evaluation.  Also, the code and pretrained weights of video classification are available to facilitate the reproduction of the paper's results.  The code and pretrained weights of video retrieval will coming soon.
+This is an official pytorch implementation of paper "Differentiable Resolution Compression and Alignment for Efficient Video Classification and Retrieval".  This repository provides code for training and evaluation.  Also, the code and pretrained weights of video classification are available to facilitate the reproduction of the paper's results.  The code and pretrained weights of video retrieval will coming soon.
 
 <p align="center">
 <img src="assert/overview.png" width=100% height=100% 
@@ -21,7 +21,7 @@ Requirements
 ## Dataset Preparation
 ### Mini-Kinetics
 + **Video**: We download video using tools from this project [kinetics-dataset](https://github.com/cvdfoundation/kinetics-dataset) and extract rgb frame from video with [extract_rgb_frames.sh](https://github.com/open-mmlab/mmaction2/blob/0.x/tools/data/kinetics/extract_rgb_frames.sh).
-+ **Annotation**: We obtain annotation from [AR-Net](https://github.com/ourownstory/AR-Net) and convert it into mmAction format. The converted annotations can be found in [`data/mini-kinetics`](https://drive.google.com/drive/folders/1BhlFFKEWX4k9vpfNQ_-FhyOJsu39cG86?usp=drive_link).
++ **Annotation**: We obtain annotation from [AR-Net](https://github.com/mengyuest/AR-Net) and convert it into mmAction format. The converted annotations can be found in [`data/mini-kinetics`](https://drive.google.com/drive/folders/1BhlFFKEWX4k9vpfNQ_-FhyOJsu39cG86?usp=drive_link).
 
 
 

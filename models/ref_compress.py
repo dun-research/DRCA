@@ -159,7 +159,7 @@ def cal_rel_pos_spatial(
 
     return attn
 
-class RefAttention(nn.Module):
+class ReferenceAttention(nn.Module):
     def __init__(
         self,
         dim,
@@ -427,7 +427,7 @@ class RefAttention(nn.Module):
         return x, q_shape
 
 
-class RefBlock(nn.Module):
+class ReferenceBlock(nn.Module):
     def __init__(
         self,
         dim,
@@ -457,7 +457,7 @@ class RefBlock(nn.Module):
         self.dim_mul_in_att = dim_mul_in_att
 
         att_dim = dim_out if dim_mul_in_att else dim
-        self.attn = RefAttention(
+        self.attn = ReferenceAttention(
             dim,
             att_dim,
             num_heads=num_heads,
@@ -546,7 +546,7 @@ def initialize_weights(module):
 
 if __name__ == "__main__":
     print("\n======================================\n")
-    kr_block = RefBlock(dim=32,
+    kr_block = ReferenceBlock(dim=32,
                 dim_out=32,
                 num_heads=4,
                 input_size=(7, 7),

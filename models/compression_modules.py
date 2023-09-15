@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 from models.weight_init import weight_init
-from models.ref_compress import RefBlock
+from models.ref_compress import ReferenceBlock
 from typing import Any, Callable, List, Optional, Type, Union
 from torch import Tensor
 
@@ -143,10 +143,8 @@ class Bottleneck3D(nn.Module):
 
         out = self.conv3(out)
         out = self.bn3(out)
-        print(f"out-bn3: {out.shape}")
         if self.downsample is not None:
             identity = self.downsample(x)
-        print(f"identity: {identity.shape}")
         out += identity
         out = self.relu(out)
 
@@ -175,11 +173,11 @@ class CompressionConv2D(nn.Module):
 class ResBlock2D(nn.Module):
     def __init__(self, in_channels) -> None:
         super().__init__()
-        self.downsample = nn.Sequential(
+        downsample = nn.Sequential(
                 conv1x1_2d(in_channels, in_channels, 2),
                 norm_layer(in_channels),
             )
-        self.bottle_neck = Bottleneck2D(in_channels, in_channels, width=in_channels*2, stride=2, downsample=self.downsample)
+        self.bottle_neck = Bottleneck2D(in_channels, in_channels, width=in_channels*2, stride=2, downsample=downsample)
     
     def forward(self, x, x_ref):
         B = x.size(0)
@@ -194,11 +192,11 @@ class ResBlock2D(nn.Module):
 class ResBlock3D(nn.Module):
     def __init__(self, in_channels) -> None:
         super().__init__()
-        self.downsample = nn.Sequential(
+        downsample = nn.Sequential(
                 nn.Conv3d(in_channels, in_channels, kernel_size=(3, 3, 3), stride=(1, 2, 2), padding=(1, 1, 1), bias=False ),
                 nn.BatchNorm3d(in_channels),
             )
-        self.bottle_neck = Bottleneck3D(in_channels, in_channels, width=in_channels*2, stride=2, downsample=self.downsample)
+        self.bottle_neck = Bottleneck3D(in_channels, in_channels, width=in_channels*2, stride=2, downsample=downsample)
     
     def forward(self, x, x_ref):
         # x.shape=(b c t h w)
@@ -270,7 +268,7 @@ class PatchMerge3D(nn.Module):
 
  
 def get_saliency_frame_reference_compression(in_channels):
-    model =  RefBlock(dim=in_channels,
+    model =  ReferenceBlock(dim=in_channels,
                 dim_out=in_channels,
                 num_heads=4,
                 input_size=(7, 7),
