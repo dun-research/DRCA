@@ -312,15 +312,9 @@ def main():
 
     rank, _ = get_dist_info()
     if rank == 0:
-
-
- 
-
-
-        if eval_config:
-            eval_res = dataset.evaluate(outputs, **eval_config)
-            for name, val in eval_res.items():
-                logger.info(f'{name}: {val:.04f}')
+        eval_res = dataset.evaluate(outputs, **eval_config)
+        for name, val in eval_res.items():
+            logger.info(f'{name}: {val:.04f}')
 
 
 if __name__ == '__main__':

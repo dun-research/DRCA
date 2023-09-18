@@ -1,0 +1,35 @@
+model = dict(
+    type='SimilarityRecognizer3D',
+    backbone=dict(
+        type='DRCA',
+        num_frames=8,
+        img_size=224,
+        patch_size=16,
+        embed_dims=768,
+        num_heads=12,
+        in_channels=3,
+        comp_insert_layer=-1,
+        comp_k=8,
+        comp_strategy="diff_rank",
+        comp_module="sal_ref",
+        sigma=0.05,
+        num_samples=500,
+        dropout_ratio=0.0,
+        transformer_layers=None,
+        norm_cfg=dict(type='LN', eps=1e-06)),
+    sim_head=dict(
+        type='SimilarityHead',
+        encoder=dict(type='None', input_channels=768, out_channels=768),
+        metric_loss=dict(
+            type='MultiSimilarityLoss',
+            distance='Cosine',
+            loss_weight=1.0,
+            margin=0.3,
+            cross_batch_memory=True,
+            memory_size=1024,
+            feat_dim=768,
+            miner_name='MultiSimilarityMiner',
+            distributed=True)),
+    # model training and testing settings
+    train_cfg=dict(aux_info=['video_id']),
+    test_cfg=dict(average_clips='prob'))

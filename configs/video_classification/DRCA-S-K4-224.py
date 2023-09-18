@@ -8,4 +8,4 @@ model = dict(
     ))
 
 load_from =  'weights/DRCA-S-K8-full-224-minik.pth'
-work_dir = 'work_dirs/DRCA/DRCA-S-K4-224'
+work_dir = 'work_dirs/video_classification/DRCA-S-K4-224'

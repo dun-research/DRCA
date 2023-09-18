@@ -2,7 +2,6 @@ model = dict(
     type='Recognizer3D',
     backbone=dict(
         type='DRCA',
-        #pretrained='pretrained_models/MM5_gsam_ViT-S_16.pth',
         pretrained=None,
         num_frames=8,
         img_size=224,

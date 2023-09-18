@@ -152,8 +152,6 @@ def main():
     else:
         lr = cfg.optimizer.lr
     
-    #if cfg.model.get("sim_head", None) is not None:
-    #    cfg.model.sim_head.metric_loss_config.distributed = distributed
 
     # The flag is used to determine whether it is omnisource training
     cfg.setdefault('omnisource', False)
@@ -237,8 +235,7 @@ def main():
     logger.info(f"lr={lr}, batch_size_per_gpu={batch_size_per_gpu}, num_gpus={num_gpus}")
     test_option = dict(test_last=args.test_last, test_best=args.test_best)
     torch.autograd.set_detect_anomaly(True)
-    if cfg.get("find_unused_parameters", False)  == True:
-        torch.save(model.state_dict(), os.path.join(cfg.work_dir, "before_train.pth"))
+
     
     train_model(
         model,

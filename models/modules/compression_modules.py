@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
-from models.weight_init import weight_init
-from models.ref_compress import ReferenceBlock
+from models.modules.weight_init import weight_init
+from models.modules.reference_compress import ReferenceBlock
 from typing import Any, Callable, List, Optional, Type, Union
 from torch import Tensor
 
@@ -30,7 +30,7 @@ def conv1x1x1_3d(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv3d:
     """1x1 convolution"""
     return nn.Conv3d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
-norm_layer = nn.BatchNorm2d
+
 class Bottleneck2D(nn.Module):
     # Bottleneck in torchvision places the stride for downsampling at 3x3 convolution(self.conv2)
     # while original implementation places the stride at the first 1x1 convolution(self.conv1)
@@ -47,22 +47,16 @@ class Bottleneck2D(nn.Module):
         width: int,
         stride: int = 1,
         downsample: Optional[nn.Module] = None,
-        # groups: int = 1,
-        # base_width: int = 32,
         dilation: int = 1,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
         super().__init__()
-        if norm_layer is None:
-            norm_layer = nn.BatchNorm2d
-        # width = int(planes * (base_width / 32.0)) * groups
-        # Both self.conv2 and self.downsample layers downsample the input when stride != 1
+
+        norm_layer = nn.BatchNorm2d
         self.conv1 = conv1x1_2d(inplanes, width)
         self.bn1 = norm_layer(width)
         self.conv2 = conv3x3_2d(width, width, stride, 1, dilation)
         self.bn2 = norm_layer(width)
-        # self.conv3 = conv1x1_2d(width, planes * self.expansion)
-        # self.bn3 = norm_layer(planes * self.expansion)
         self.conv3 = conv1x1_2d(width, inplanes)
         self.bn3 = norm_layer(inplanes)
         self.relu = nn.ReLU(inplace=True)
@@ -108,22 +102,16 @@ class Bottleneck3D(nn.Module):
         width: int,
         stride: int = 1,
         downsample: Optional[nn.Module] = None,
-        # groups: int = 1,
-        # base_width: int = 32,
         dilation: int = 1,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
     ) -> None:
         super().__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm3d
-        # width = int(planes * (base_width / 32.0)) * groups
-        # Both self.conv2 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv1x1x1_3d(inplanes, width, )
         self.bn1 = norm_layer(width)
         self.conv2 = nn.Conv3d(width, width, kernel_size=(3, 3, 3), stride=(1, 2, 2), padding=(1, 1, 1), bias=False)
         self.bn2 = norm_layer(width)
-        # self.conv3 = conv1x1_2d(width, planes * self.expansion)
-        # self.bn3 = norm_layer(planes * self.expansion)
         self.conv3 = conv1x1x1_3d(width, inplanes)
         self.bn3 = norm_layer(inplanes)
         self.relu = nn.ReLU(inplace=True)
@@ -271,8 +259,6 @@ def get_saliency_frame_reference_compression(in_channels):
     model =  ReferenceBlock(dim=in_channels,
                 dim_out=in_channels,
                 num_heads=4,
-                input_size=(7, 7),
-                mode="conv",
                 has_cls_embed=False,
                 kernel_q=(3, 3),
                 kernel_kv=(1, 1),

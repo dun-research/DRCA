@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 from math import sqrt
-from models.compression_modules import get_compression_module
-from models.diff_rank import PerturbedRank, UniformSample
-from models.weight_init import weight_init
+from models.modules.compression_modules import get_compression_module
+from models.modules.diff_rank import PerturbedRank, UniformSample
+from models.modules.weight_init import weight_init
 
 
 class DiffContextAwareCompressionModule(nn.Module):
@@ -33,9 +33,7 @@ class DiffContextAwareCompressionModule(nn.Module):
     def forward(self, x, x_cls, return_index=False):
         B, C, T, H, W = x.shape
         origin_H, origin_W = H, W
-
-        if self.strategy.find("info_rank") >=0:
-            x = (x, x_cls)
+        
         frames_topk, frames_back, sorted_inds = self.rank_net(x)
         frames_back_lowres = self.compression(frames_back, frames_topk)
         

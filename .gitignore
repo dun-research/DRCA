@@ -1,5 +1,6 @@
 weights
 outputs
+data/
 data/test_frames
 data/test_videos
 data/kinetics400

@@ -1,6 +1,8 @@
 
+from collections import OrderedDict
 import numpy as np
 import torch
+from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
@@ -10,42 +12,16 @@ from mmcv.cnn.utils.weight_init import trunc_normal_
 from mmaction.utils import get_root_logger
 from mmaction.models.builder import BACKBONES
 from mmaction.models.backbones.timesformer import PatchEmbed
-from models.rat_layers import ResolutionAlignTransformerLayerSequence
+from models.modules.reso_align_layers import ResolutionAlignTransformerLayerSequence
 
 
 @BACKBONES.register_module()
 class DRCA(nn.Module):
-    """
-    Args:
-        num_frames (int): Number of frames in the video.
-        img_size (int | tuple): Size of input image.
-        patch_size (int): Size of one patch.
-        pretrained (str | None): Name of pretrained model. Default: None.
-        embed_dims (int): Dimensions of embedding. Defaults to 768.
-        num_heads (int): Number of parallel attention heads in
-            TransformerCoder. Defaults to 12.
-        num_transformer_layers (int): Number of transformer layers. Defaults to
-            12.
-        in_channels (int): Channel num of input features. Defaults to 3.
-        dropout_ratio (float): Probability of dropout layer. Defaults to 0..
-        transformer_layers (list[obj:`mmcv.ConfigDict`] |
-            obj:`mmcv.ConfigDict` | None): Config of transformerlayer in
-            TransformerCoder. If it is obj:`mmcv.ConfigDict`, it would be
-            repeated `num_transformer_layers` times to a
-            list[obj:`mmcv.ConfigDict`]. Defaults to None.
-        attention_type (str): Type of attentions in TransformerCoder. Choices
-            are 'divided_space_time', 'space_only' and 'joint_space_time'.
-            Defaults to 'divided_space_time'.
-        norm_cfg (dict): Config for norm layers. Defaults to
-            `dict(type='LN', eps=1e-6)`.
-    """
-
     def __init__(self,
                  num_frames,
                  img_size,
                  patch_size,
                  pretrained=None,
-                 freeze=False,
                  embed_dims=768,
                  num_heads=12,
                  num_transformer_layers=12,
@@ -54,10 +30,10 @@ class DRCA(nn.Module):
                  transformer_layers=None,
                  norm_cfg=dict(type='LN', eps=1e-6),
                  # compression args
-                 comp_insert_layer=None, # if comp_insert_layer is None, don't use compression
+                 comp_insert_layer=-1, # if comp_insert_layer is -1, don't use compression
                  comp_k=4,
-                 comp_strategy='tconv',
-                 comp_module="krc",
+                 comp_strategy='diff_rank',
+                 comp_module="sal_ref",
                  sigma=0.05,
                  num_samples=500,
                  **kwargs):
@@ -71,7 +47,7 @@ class DRCA(nn.Module):
         self.embed_dims = embed_dims
         self.num_transformer_layers = num_transformer_layers
 
-        self.freeze = freeze
+
 
         self.patch_embed = PatchEmbed(
             img_size=img_size,
@@ -154,12 +130,14 @@ class DRCA(nn.Module):
     def init_weights(self, pretrained=None):
         """Initiate the parameters either from existing checkpoint or from
         scratch."""
+        
         trunc_normal_(self.pos_embed, std=.02)
         trunc_normal_(self.cls_token, std=.02)
         trunc_normal_(self.time_embed, std=.02)
 
         if pretrained:
             self.pretrained = pretrained
+        
             
         if isinstance(self.pretrained, str):
             logger = get_root_logger()
@@ -169,6 +147,10 @@ class DRCA(nn.Module):
             if 'state_dict' in state_dict:
                 state_dict = state_dict['state_dict']
 
+            if not self.pretrained.startswith('imagenet'):
+                self.load_state_dict(state_dict)
+
+            self.attention_type = 'divided_space_time'
             if self.attention_type == 'divided_space_time':
                 # modify the key names of norm layers
                 old_state_dict_keys = list(state_dict.keys())
@@ -201,40 +183,8 @@ class DRCA(nn.Module):
                     logger.info(f"resize pos_embed from {pos_embed.size()} to {new_pos_embed.size()}")
 
                 load_state_dict(self, state_dict, strict=False, logger=logger)
-            
-            # reinit cls_token
-            # trunc_normal_(self.cls_token, std=.02)
 
-    def _freeze_stages(self):
-        self.frozen_stages = 3 #self.comp_insert_layer #self.num_transformer_layers
-        self.patch_embed.eval()
-        self.cls_token.requires_grad =False
-        self.time_embed.requires_grad = False
-        self.pos_embed.requires_grad = False
-        #self.time_embed.eval()
-        #self.pos_embed.eval()
-        for param in self.patch_embed.parameters():
-            param.requires_grad = False
-
-        #for param in self.time_embed.parameters():
-        #    param.requires_grad = False
-
-        #for param in self.pos_embed.parameters():
-        #    param.requires_grad = False
-
-        if self.frozen_stages >= 1:
-            for i in range(0, self.frozen_stages):
-                m = self.transformer_layers.layers[i]
-                m.eval()
-                for param in m.parameters():
-                    param.requires_grad = False
-
-    def train(self, mode=True):
-        ret = super().train(mode)
-        if self.freeze:
-            self._freeze_stages()
-        return ret
-
+        
     def forward(self, x):
         """Defines the computation performed at every call."""
         # x [batch_size * num_frames, num_patches, embed_dims]
@@ -256,7 +206,7 @@ class DRCA(nn.Module):
         x = rearrange(x, '(b p) t m -> b (p t) m', b=batches)
         x = torch.cat((cls_tokens, x), dim=1)
 
-        x, sort_index = self.transformer_layers(x, None, None)
+        x = self.transformer_layers(x, None, None)
         x = self.norm(x)
 
         # Return Class Token

@@ -6,7 +6,7 @@ import einops
 from einops import rearrange
 from math import sqrt
 import torch.distributed as dist
-from models.weight_init import weight_init
+from models.modules.weight_init import weight_init
 
 class UniformSample(nn.Module):
     def __init__(self, k: int, T: int) -> None:

@@ -4,7 +4,7 @@ from mmcv.cnn.bricks.transformer import build_transformer_layer
 import copy
 import numpy as np
 from einops import rearrange
-from models.dccm import DiffContextAwareCompressionModule
+from models.modules.dccm import DiffContextAwareCompressionModule
 
 
 class ResolutionAlignTransformerLayerSequence(nn.Module):
@@ -81,7 +81,7 @@ class ResolutionAlignTransformerLayerSequence(nn.Module):
             x_low = rearrange(x_low, "b h w t c -> b (h w t) c")
             x = torch.cat([x_cls, x_high, x_low], dim=1)
             query = x
-        return query, sort_index
+        return query
     
     def get_rank_index(self, query):
         # query: (bs, 1+T*P, c)

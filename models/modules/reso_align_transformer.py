@@ -7,23 +7,12 @@ from mmaction.models.common import DividedTemporalAttentionWithNorm
 
 import torch.functional as F
 
-from mmcv.cnn import (Linear, build_activation_layer, build_norm_layer)
-from mmcv.runner.base_module import BaseModule, Sequential
-from mmcv.utils import deprecated_api_warning
+from mmcv.cnn import (build_norm_layer)
 from mmcv.runner.base_module import BaseModule
-from mmcv.cnn import build_norm_layer, constant_init
+from mmcv.cnn import build_norm_layer
 from mmcv.cnn.bricks.registry import ATTENTION, FEEDFORWARD_NETWORK
 from mmcv.cnn.bricks.transformer import FFN, build_dropout
 from mmcv.utils import digit_version
-
-
-def _weight_init(m):
-    if isinstance(m, nn.Conv2d):
-        nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-    elif isinstance(m, nn.BatchNorm2d):
-        nn.init.constant_(m.weight, 1.)
-        if m.bias is not None:
-            nn.init.constant_(m.bias, 0.)
 
 
 @ATTENTION.register_module()
@@ -235,35 +224,6 @@ class ResolutionAlignDividedSpatialAttentionWithNorm(BaseModule):
 
 @FEEDFORWARD_NETWORK.register_module()
 class ResolutionAlignFFN(FFN):
-    """FFN with pre normalization layer.
-
-    FFNWithNorm is implemented to be compatible with `BaseTransformerLayer`
-    when using `DividedTemporalAttentionWithNorm` and
-    `DividedSpatialAttentionWithNorm`.
-
-    FFNWithNorm has one main difference with FFN:
-
-    - It apply one normalization layer before forwarding the input data to
-        feed-forward networks.
-
-    Args:
-        embed_dims (int): Dimensions of embedding. Defaults to 256.
-        feedforward_channels (int): Hidden dimension of FFNs. Defaults to 1024.
-        num_fcs (int, optional): Number of fully-connected layers in FFNs.
-            Defaults to 2.
-        act_cfg (dict): Config for activate layers.
-            Defaults to `dict(type='ReLU')`
-        ffn_drop (float, optional): Probability of an element to be
-            zeroed in FFN. Defaults to 0..
-        add_residual (bool, optional): Whether to add the
-            residual connection. Defaults to `True`.
-        dropout_layer (dict | None): The dropout_layer used when adding the
-            shortcut. Defaults to None.
-        init_cfg (dict): The Config for initialization. Defaults to None.
-        norm_cfg (dict): Config dict for normalization layer. Defaults to
-            `dict(type='LN')`.
-    """
-
     def __init__(self, *args, norm_cfg=dict(type='LN'), **kwargs):
         super().__init__(*args, **kwargs)
         self.norm = build_norm_layer(norm_cfg, self.embed_dims)[1]

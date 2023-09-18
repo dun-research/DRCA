@@ -40,7 +40,7 @@ data = dict(
                 num_clips=1,
                 test_mode=True),
             dict(type='RawFrameDecode'),
-            dict(type='Resize', scale=(-1, 224)),
+            dict(type='Resize', scale=(-1, 256)),
             dict(type='CenterCrop', crop_size=224),
             dict(
                 type='Normalize',
@@ -64,7 +64,7 @@ data = dict(
                 num_clips=1,
                 test_mode=True),
             dict(type='RawFrameDecode'),
-            dict(type='Resize', scale=(-1, 224)),
+            dict(type='Resize', scale=(-1, 256)),
             dict(type='CenterCrop', crop_size=224),
             dict(
                 type='Normalize',
